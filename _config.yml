@@ -1,0 +1,24 @@
+title:              Helen's Blog
+email:              mengxin.ji1992@gmail.com
+description:        A Blog Theme by Start Bootstrap
+author:             Helen Ji
+baseurl:            "/blogs"
+url:                "https://mengxinji.github.io"
+
+# Social Profiles
+twitter_username:   Helen_econ
+github_username:    MengxinJi
+facebook_username:  mumujimx
+linkedin_username:  mengxinji
+
+# Add your google-analytics ID here to activate google analytics
+google_analytics:   UA-XXXXXXXXX-X # out your google-analytics code
+
+# Build settings
+markdown:           kramdown
+paginate:           5
+paginate_path:      "/posts/page:num/"
+plugins:
+  - jekyll-feed
+  - jekyll-paginate
+  - jekyll-sitemap ## Uncomment this line to silently generate a sitemaps.org compliant sitemap for your Jekyll site
