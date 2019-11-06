@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <title>
+    Making Regression Make Sense - Helen&#39;s Blog
+    
+  </title>
+
+  <meta name="description" content="In most cases, regression is used with observational data. Without the benefit of random assignment, regression estimates may or may not have a causal interp...">
+
+  <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="/blogs/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+  <link rel="stylesheet" href="/blogs/assets/vendor/fontawesome-free/css/all.min.css">
+
+  <link rel="stylesheet" href="/blogs/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/blogs/2019/01/11/making-regression-make-sense.html">
+  <link rel="alternate" type="application/rss+xml" title="Helen&#39;s Blog" href="/blogs/feed.xml">
+
+</head>
+
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="/blogs/">Helen&#39;s Blog</a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+      Menu
+      <i class="fa fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/about">About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/posts">Posts</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/contact">Contact</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Making Regression Make Sense</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Helen Ji</a>
+              on January 11, 2019 &middot; <span class="reading-time" title="Estimated read time">
+  
+   3 mins  read </span>
+
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <p>In most cases, regression is used with observational data. Without the benefit of random assignment, regression estimates may or may not have a causal interpretation.</p>
+
+<h2 id="regression-fundamentals">Regression Fundamentals</h2>
+
+<p>Before discussing about random experiment regression, we first review the following properties about general regression:</p>
+
+<p>(i) the intimate connection between the population regression function and the conditional expectation function;
+(ii) how and why regression coefficients change as covariates are added or removed from the model;
+(iii) the close link between regression and other “control strategies” such as matching;
+(iv) the sampling distribution of regression estimates.</p>
+
+<p>The question of whether the earnings - schooling relationship is causal is of enormous importance. Even without resolving the difficult question of causality, however, it is clear that education predicts earnings in a narrow statistical sense. This predictive power is compellingly summarized by the conditional expectation function (CEF).</p>
+
+<p>Expectation is a population concept. In practice, data usually come in the form of samples and rarely consist of an entire population. We therefore use samples to make inferences about the population.</p>
+
+<p>(Properties of CEF can be found in Chapter 3)</p>
+
+<h2 id="regression-and-causality">Regression and Causality</h2>
+
+<p>A regression is causal when the CEF it approximates is causal. The CEF is causal when it describes differences in average potential outcomes for a fixed reference population.</p>
+
+<p>As we discussed in previous post, experiments ensure that the causal variable of interest is independent of potential outcomes so that the groups being compared are truly comparable. Here, we would like to generalize this notion to causal variables that take on more than two values, and to more complicated situations where we must hold a variety of “control variables” fixed for causal inferences to be valid. This leads to the conditional independence assumption (CIA), a core assumption that provides the (sometimes implicit) justification for the causal interpretation of regression. This assumption is sometimes called selection-on-observables because the covariates to be held fixed are assumed to be known and observed. The CIA asserts that conditional on observed characteristics, Xi, selection bias disappears.</p>
+
+<p>The omitted variables bias (OVB) formula describes the relationship between regression estimates in models with different sets of control variables. This important formula is often motivated by the notion that a longer regression, i.e., one with more controls, has a causal interpretation, while a shorter regression does not.s determined.</p>
+
+<p>We have made the point that control for covariates can make the CIA more plausible. But more control is not always better. Some variables are bad controls and should not be included in a regression model even when their inclusion might be expected to change the short regression coefficients. Bad controls are variables that are themselves outcome variables in the notional experiment at hand. That is, bad controls might just as well be dependent variables too. Good controls are variables that we can think of as having been fixed at the time the regressor of interest was determined.</p>
+
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/blogs/2019/01/10/experimental-ideal.html" data-toggle="tooltip" data-placement="top" title="Experimental Ideal">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+          <a class="btn btn-primary float-right" href="/blogs/2019/03/03/week-4-openai-gym.html" data-toggle="tooltip" data-placement="top" title="Week 4: OpenAI gym">Next<span class="d-none d-md-inline">
+              Post</span> &rarr;</a>
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        <ul class="list-inline text-center">
+          
+          <li class="list-inline-item">
+            <a href="mailto:mengxin.ji1992@gmail.com">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://twitter.com/Helen_econ">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://www.facebook.com/mumujimx">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-facebook-f fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://www.linkedin.com/in/mengxinji">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://github.com/MengxinJi">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+        </ul>
+        <p class="copyright text-muted">Copyright &copy; Helen Ji 2019</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+  <script src="/blogs/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/blogs/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/blogs/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/blogs/assets/scripts.js"></script>
+
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXXXXXX-X"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-XXXXXXXXX-X');
+</script>
+
+
+
+</body>
+
+</html>

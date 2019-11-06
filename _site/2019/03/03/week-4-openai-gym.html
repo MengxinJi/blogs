@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <title>
+    Week 4: OpenAI gym - Helen&#39;s Blog
+    
+  </title>
+
+  <meta name="description" content="Setup AWS with PyTorch/Tensorflow, Jupyter, and OpenAI gym">
+
+  <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="/blogs/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+  <link rel="stylesheet" href="/blogs/assets/vendor/fontawesome-free/css/all.min.css">
+
+  <link rel="stylesheet" href="/blogs/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/blogs/2019/03/03/week-4-openai-gym.html">
+  <link rel="alternate" type="application/rss+xml" title="Helen&#39;s Blog" href="/blogs/feed.xml">
+
+</head>
+
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="/blogs/">Helen&#39;s Blog</a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+      Menu
+      <i class="fa fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/about">About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/posts">Posts</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/contact">Contact</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Week 4: OpenAI gym</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Helen Ji</a>
+              on March 03, 2019 &middot; <span class="reading-time" title="Estimated read time">
+  
+   4 mins  read </span>
+
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <h2 id="setup-aws-with-pytorchtensorflow-jupyter-and-openai-gym">Setup AWS with PyTorch/Tensorflow, Jupyter, and OpenAI gym</h2>
+
+<p>Amazon Web Services (AWS) is a subsidiary of Amazon that provides on-demand cloud computing platforms to individuals, companies and governments, on a paid subscription basis. The technology allows subscribers to have at their disposal a virtual cluster of computers, available all the time, through the Internet. For those who are just getting started with machine learning, deep learning (computer vision, natural language processing, deep reinforcement learning), AWS is really a good platform to work with. For the virtual machine with GPUs, it can speed up the learning time for neural networks. One of our scholars, Yuhao introduced <a href="https://yuhao-wan.github.io/blog/deep-learning-with-aws-guide/">how to setup AWS</a> step by step. In this post, I will focus on setting up Jupyter Notebook and implement some sample codes with OpenAI gym.</p>
+
+<h2 id="jupyter-notebook-and-monitor-notebook-on-local-computer">Jupyter Notebook and Monitor Notebook on Local Computer</h2>
+
+<p>Once you successfully set up your AWS,</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">pip</span> <span class="n">install</span> <span class="n">jupyter</span>
+<span class="n">jupyter</span> <span class="n">notebook</span> <span class="o">--</span><span class="n">generate</span><span class="o">-</span><span class="n">config</span>
+<span class="n">jupyter</span> <span class="n">notebook</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">browser</span> <span class="o">--</span><span class="n">port</span><span class="o">=</span><span class="mi">8889</span>
+</code></pre></div></div>
+<p>Then on your local computer, open a new terminal, type in the following command to monitor the jupyter notebook on AWS from local:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ssh</span> <span class="o">-</span><span class="n">i</span> <span class="n">key</span><span class="p">.</span><span class="nf">pem</span> <span class="o">-</span><span class="no">NfL</span> <span class="mi">8889</span><span class="ss">:localhost</span><span class="p">:</span><span class="mi">8889</span> <span class="n">remote_user</span><span class="vi">@remote_host</span>
+</code></pre></div></div>
+
+<h2 id="openai-gym">OpenAI gym</h2>
+
+<p>Gym is a toolkit for developing and comparing reinforcement learning algorithms. It makes no assumptions about the structure of your agent, and is compatible with any numerical computation library, such as TensorFlow or PyTorch.</p>
+
+<p>First, we have to install OpenAI gym for reinforcement learning.</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># if you are using python 2.7:</span>
+<span class="err">$</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">gym</span>
+
+<span class="c1"># if you are using python 3.5:</span>
+<span class="err">$</span> <span class="n">pip3</span> <span class="n">install</span> <span class="n">gym</span>
+</code></pre></div></div>
+
+<p>Congratulations! Now you are able to run basic gym examples: 
+	- algorithmic
+	- toy_text
+	- classic_control</p>
+
+<p>You might have to install the following packages if you receive error in previous steps:</p>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># MacOS:</span>
+<span class="err">$</span> <span class="n">brew</span> <span class="n">install</span> <span class="n">cmake</span> <span class="n">boost</span> <span class="n">boost</span><span class="o">-</span><span class="n">python</span> <span class="n">sdl2</span> <span class="n">swig</span> <span class="n">wget</span>
+
+<span class="c1"># Ubuntu 14.04:</span>
+<span class="err">$</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">python</span><span class="o">-</span><span class="n">numpy</span> <span class="n">python</span><span class="o">-</span><span class="n">dev</span> <span class="n">cmake</span> <span class="n">zlib1g</span><span class="o">-</span><span class="n">dev</span> <span class="n">libjpeg</span><span class="o">-</span><span class="n">dev</span> <span class="n">xvfb</span> <span class="n">libav</span><span class="o">-</span><span class="n">tools</span> <span class="n">xorg</span><span class="o">-</span><span class="n">dev</span> <span class="n">python</span><span class="o">-</span><span class="n">opengl</span> <span class="n">libboost</span><span class="o">-</span><span class="n">all</span><span class="o">-</span><span class="n">dev</span> <span class="n">libsdl2</span><span class="o">-</span><span class="n">dev</span> <span class="n">swig</span>
+</code></pre></div></div>
+
+<p>Now let’s see some examples from OpenAI gym:</p>
+
+<pre><code class="language-IPython">import matplotlib.pyplot as plt
+%matplotlib inline
+from IPython import display
+
+import gym
+from IPython import display
+import matplotlib
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+env = gym.make('Breakout-v0')
+env.reset()
+img = plt.imshow(env.render(mode='rgb_array')) # only call this once
+for _ in range(500):
+    img.set_data(env.render(mode='rgb_array')) # just update the data
+    display.display(plt.gcf())
+    display.clear_output(wait=True)
+    action = env.action_space.sample()
+    env.step(action)
+</code></pre>
+<p><img src="https://mengxinji.github.io/Blog/images/breakout.png" alt="Breakout-v0" style="float:center; padding:16px" /></p>
+
+<pre><code class="language-IPython">import gym
+import math
+import numpy as np
+import tempfile
+from gym import wrappers
+from IPython import display
+import matplotlib
+import matplotlib.pyplot as plt
+%matplotlib inline
+tdir = tempfile.mkdtemp()
+
+env = gym.make('FrozenLake-v0')
+env.seed(0)
+np.random.seed(56776)
+q_learning_table = np.zeros([env.observation_space.n,env.action_space.n])
+
+# -- hyper --
+num_epis = 500
+num_iter = 200
+learning_rate = 0.2
+discount = 0.9
+
+# -- training the agent ----
+for epis in range(num_epis):
+    
+    state = env.reset()
+
+    for iter in range(num_iter):
+        action = np.argmax(q_learning_table[state,:] + np.random.randn(1,4))
+        state_new,reward,done,_ = env.step(action)
+        q_learning_table[state,action] = (1-learning_rate)* q_learning_table[state,action] + \
+                                         learning_rate * (reward + discount*np.max(q_learning_table[state_new,:]) )
+        state = state_new
+
+        if done: break
+
+print(np.argmax(q_learning_table,axis=1))
+print(np.around(q_learning_table,5))
+print('-------------------------------')
+s = env.reset()
+for _ in range(500):
+    action  = np.argmax(q_learning_table[s,:])
+    state_new,_,done,_ = env.step(action)
+    env.render()
+    s = state_new
+    if done: break
+</code></pre>
+
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/blogs/2019/01/11/making-regression-make-sense.html" data-toggle="tooltip" data-placement="top" title="Making Regression Make Sense">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+          <a class="btn btn-primary float-right" href="/blogs/2019/03/09/notebook-q-learning.html" data-toggle="tooltip" data-placement="top" title="Notebook: Tabular Q-Learning">Next<span class="d-none d-md-inline">
+              Post</span> &rarr;</a>
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        <ul class="list-inline text-center">
+          
+          <li class="list-inline-item">
+            <a href="mailto:mengxin.ji1992@gmail.com">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://twitter.com/Helen_econ">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://www.facebook.com/mumujimx">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-facebook-f fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://www.linkedin.com/in/mengxinji">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://github.com/MengxinJi">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+        </ul>
+        <p class="copyright text-muted">Copyright &copy; Helen Ji 2019</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+  <script src="/blogs/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/blogs/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/blogs/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/blogs/assets/scripts.js"></script>
+
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXXXXXX-X"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-XXXXXXXXX-X');
+</script>
+
+
+
+</body>
+
+</html>

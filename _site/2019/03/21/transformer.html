@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <title>
+    Transformer - Helen&#39;s Blog
+    
+  </title>
+
+  <meta name="description" content="Since Attention mechanism was proposed, the seq2seq model with attention has been improved in each task, so the current seq2seq model usually refers to the m...">
+
+  <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="/blogs/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+  <link rel="stylesheet" href="/blogs/assets/vendor/fontawesome-free/css/all.min.css">
+
+  <link rel="stylesheet" href="/blogs/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/blogs/2019/03/21/transformer.html">
+  <link rel="alternate" type="application/rss+xml" title="Helen&#39;s Blog" href="/blogs/feed.xml">
+
+</head>
+
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="/blogs/">Helen&#39;s Blog</a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+      Menu
+      <i class="fa fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/about">About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/posts">Posts</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/contact">Contact</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <!-- Page Header -->
+
+<header class="masthead" style="background-image: url('/blogs/img/transformer/transformerdetails.png')">
+  
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Transformer</h1>
+            
+            <h2 class="subheading"></h2>
+            
+            <span class="meta">Posted by
+              <a href="#">Helen Ji</a>
+              on March 21, 2019 &middot; <span class="reading-time" title="Estimated read time">
+  
+   4 mins  read </span>
+
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <p>Since Attention mechanism was proposed, the seq2seq model with attention has been improved in each task, so the current seq2seq model usually refers to the model combining RNN and Attention. The specific models can refer to previous posts. After then, Google proposed a transformer model to solve the seq2seq problem, replacing the LSTM with a full attention structure and achieved better results in the translation task. This post will focus on <a href="https://arxiv.org/pdf/1706.03762">Attention is All You Need</a>.</p>
+
+<p><img src="https://mengxinji.github.io/blogs/img/transformer/transformer.jpg" alt="Transformer Model" style="float:bottom; padding:16px" /></p>
+
+<p>Same as most seq2seq model, transformer also consists of Encoder and Decoder.</p>
+
+<h2 id="encoder">Encoder</h2>
+<p>Encoder consists of N = 6 identical layers. The layer refers to the unit on the left side of the model figure. There is an Nx on the left, here is *6. Each layer consists of two sub-layers: a multi-head self-attention mechanism and a fully connected feed-forward network. Each sub-layer adds a backup connection and normalization, so the output of the sub-layer can be expressed as:</p>
+
+<p><img src="https://mengxinji.github.io/Blog/images/transformer/encoder1.svg" alt="sublayer" style="float:bottom; padding:16px" /></p>
+
+<h3 id="key-value-and-query">Key, Value and Query</h3>
+<p>The major component in the transformer is the unit of multi-head self-attention mechanism. The transformer views the encoded representation of the input as a set of key-value pairs, (K, V), both of dimension n (input sequence length); in the previous output is compressed into a query (Q of dimension m) and the next output is produced by mapping this query and the set of keys and values.</p>
+
+<h3 id="multi-head-self-attention">Multi-head Self-Attention</h3>
+<p>Attention can be expressed as:</p>
+
+<p><img src="https://mengxinji.github.io/blogs/img/transformer/attentionoutput.svg" alt="sublayer" style="float:bottom; padding:16px" /></p>
+
+<p>Multi-head attention is the project Q, K V through h different linear transformations, and finally splicing different attention results:</p>
+
+<p><img src="https://mengxinji.github.io/blogs/img/transformer/multihead.svg" alt="sublayer" style="float:bottom; padding:16px" /></p>
+
+<p><img src="https://mengxinji.github.io/blogs/img/transformer/head.svg" alt="sublayer" style="float:bottom; padding:16px" /></p>
+
+<p>In self-attention, Q, K, V are set same.</p>
+
+<p>In the paper, they use scaled dot-product to calculate attention:</p>
+
+<p><img src="https://mengxinji.github.io/blogs/img/transformer/attentionscaled.svg" alt="sublayer" style="float:bottom; padding:16px" /></p>
+
+<h3 id="position-wise-feed-forward-network">Position-wise Feed-forward Network</h3>
+
+<h2 id="decoder">Decoder</h2>
+<p>The structure of Decoder and Encoder are similar, but there is an additional sub-layer of attention. Here we first define the input, output and decoding process of the Decoder:</p>
+
+<ul>
+  <li>Output: probability distribution of output words corresponding to ith position;</li>
+  <li>Input: output of Encoder and output of Decoder corresponding to (i - 1)th position. Hence, the intermediate attention is not self-attention, the K, V come from the Encoder while Q comes from the output of the previous position Decoder.</li>
+  <li>Decoding: here we need to pay special attention to the fact that the encoding can be calculated parallel, all encoded at once; however, the decoding does not solve all sequences at once, but solves them one by one just like RNN. Because the input of the previous position is used as the Query of attention.</li>
+</ul>
+
+<p><img src="https://mengxinji.github.io/blogs/img/transformer/scaledAttention.jpg" alt="sublayer" style="float:left; padding:16px" /></p>
+
+<h2 id="positional-encoding">Positional Encoding</h2>
+<p>In addition to the Encode and Decoder, there are also data preprocessing parts. Transformer discards RNN, while the biggest advantage of RNN is the abstraction of data in time series. Hence, the author proposes two methods of Positional Encoding, which sums the encoded data with the embedding data with relative position information.</p>
+
+<ul>
+  <li>Method 1: directly calculate with sin and cos functions with different frequencies</li>
+  <li>Method 2: learn a positional embedding</li>
+</ul>
+
+<p>They both give the same results, so we list first method as follows:</p>
+
+<p><img src="https://mengxinji.github.io/blogs/img/transformer/PE1.svg" alt="sublayer" style="float:bottom; padding:16px" /></p>
+
+<p><img src="https://mengxinji.github.io/blogs/img/transformer/PE2.svg" alt="sublayer" style="float:bottom; padding:16px" /></p>
+
+<ul>
+  <li>Any position of PE_{pos+k} can be represented by a linear function of PE_{pos};</li>
+</ul>
+
+<p><img src="https://mengxinji.github.io/blogs/img/transformer/cos.svg" alt="sublayer" style="float:bottom; padding:16px" /></p>
+
+<p><img src="https://mengxinji.github.io/blogs/img/transformer/sin.svg" alt="sublayer" style="float:bottom; padding:16px" /></p>
+
+<h2 id="full-architecture">Full Architecture</h2>
+<p>We can summarize the full architecture as follows:</p>
+
+<ul>
+  <li>both the source and target sequences first go through embedding layers to produce data of the same dimension;</li>
+  <li>to preserve the position information, we applied positional encoding using sin and cos function with different frequencies;</li>
+  <li>we apply a softmax and linear layer to the final decoder output.</li>
+</ul>
+
+<!--
+![Full Architecture](https://mengxinji.github.io/blogs/img/transformer/transformerdetails.png){: width=5 height=3 style="float:bottom; padding:8px"}
+
+
+
+$$( 2 + 4_{i} = 5$$
+
+$$ 
+\begin{align*}
+	&a + b = \alpha\\
+	&c + d = \beta
+\end{align*}
+$$
+-->
+
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/blogs/2019/03/19/attention.html" data-toggle="tooltip" data-placement="top" title="Attention">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+          <a class="btn btn-primary float-right" href="/blogs/2019/03/27/pre-trained-bert.html" data-toggle="tooltip" data-placement="top" title="Pre-trained BERT">Next<span class="d-none d-md-inline">
+              Post</span> &rarr;</a>
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        <ul class="list-inline text-center">
+          
+          <li class="list-inline-item">
+            <a href="mailto:mengxin.ji1992@gmail.com">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://twitter.com/Helen_econ">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://www.facebook.com/mumujimx">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-facebook-f fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://www.linkedin.com/in/mengxinji">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://github.com/MengxinJi">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+        </ul>
+        <p class="copyright text-muted">Copyright &copy; Helen Ji 2019</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+  <script src="/blogs/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/blogs/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/blogs/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/blogs/assets/scripts.js"></script>
+
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXXXXXX-X"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-XXXXXXXXX-X');
+</script>
+
+
+
+</body>
+
+</html>

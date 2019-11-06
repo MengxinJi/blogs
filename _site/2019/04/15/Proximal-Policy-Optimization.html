@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <title>
+    Proximal Policy Optimization - Helen&#39;s Blog
+    
+  </title>
+
+  <meta name="description" content="Introduction Paper: Proximal Policy Optimization Algorithms">
+
+  <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="/blogs/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+  <link rel="stylesheet" href="/blogs/assets/vendor/fontawesome-free/css/all.min.css">
+
+  <link rel="stylesheet" href="/blogs/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/blogs/2019/04/15/Proximal-Policy-Optimization.html">
+  <link rel="alternate" type="application/rss+xml" title="Helen&#39;s Blog" href="/blogs/feed.xml">
+
+</head>
+
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="/blogs/">Helen&#39;s Blog</a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+      Menu
+      <i class="fa fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/about">About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/posts">Posts</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/contact">Contact</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Proximal Policy Optimization</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Helen Ji</a>
+              on April 15, 2019 &middot; <span class="reading-time" title="Estimated read time">
+  
+   18 mins  read </span>
+
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <hr />
+<p>Introduction Paper: <a href="https://arxiv.org/abs/1707.06347">Proximal Policy Optimization Algorithms</a></p>
+
+<p>Authors: John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, Oleg Klimov</p>
+
+<p>Introduction Paper: <a href="https://arxiv.org/abs/1707.02286">Emergence of Locomotion Behaviours in Rich Environments</a></p>
+
+<p>Authors: Nicolas Heess, Dhruva TB, Srinivasan Sriram, Jay Lemmon, Josh Merel, Greg Wayne, Yuval Tassa, Tom Erez, Ziyu Wang, S. M. Ali Eslami, Martin Riedmiller, David Silver</p>
+
+<hr />
+
+<p>In July 2017, DeepMind and OpenAI post articles on PPO (Proximal Policy Optimization) on arXiv respectively, i.e., OpenAI’s “<a href="(https://arxiv.org/abs/1707.06347)">Proximal Policy Optimization Algorithms</a>” and DeepMind’s “<a href="https://arxiv.org/abs/1707.02286">Emergence of Locomotion Behaviours in Rich Environments</a>”. PPO is usually considered to be the approximate algorithm of TRPO (Trust Region Policy Optimization), which is more adaptable to large-scale operations. DeepMind’s article also proposed Distributed PPO for distributed training. In this post, I will start with TRPO.</p>
+
+<h3 id="trust-region-policy-optimization">Trust Region Policy Optimization</h3>
+
+<p>TRPO was proposed due to the idea that we should avoid parameter updates that change the policy too much at one step so as to improve training stability. Hence, TRPO takes this into consideration by enforcing a KL divergence constraint on the size of policy update at each iteration. In previous literature, suppose the strategy is controlled by the parameter, and the goal of each optimization is to find the divergence within a certain range:</p>
+
+<p align="center">
+  <img width="300" height="120" src="https://mengxinji.github.io/Blog/images/ppo/klobj.svg" />
+</p>
+
+<p>Removing some complicated procedure, TRPO uses the following approximates:</p>
+
+<p align="center">
+  <img width="320" height="210" src="https://mengxinji.github.io/Blog/images/ppo/approximate.svg" />
+</p>
+
+<p>Hence, the objective function becomes the following form from TRPO algorithm. In particular, we can still separate the algorithm procedure into off-policy and on-policy:</p>
+
+<ul>
+  <li>If off-policy, the objective function measures the total advantage over the sate visitation distribution and actions, while the rollouts is following a different behavior policy distribution;</li>
+</ul>
+<p align="left">
+  <img width="450" height="200" src="https://mengxinji.github.io/Blog/images/ppo/obj.svg" />
+</p>
+<ul>
+  <li>If on-policy, the behavior policy is the previous policy.
+<img src="https://mengxinji.github.io/Blog/images/ppo/onpolicyobj.svg" alt="onpolicy" style="float:center; padding:16px" /></li>
+</ul>
+
+<p>As introduced above, TRPO aims to maximize the objective function subject to, trust region constraint which enforces the distance between old and new policies measured by KL-divergence to be small enough, within a parameter:
+<img src="https://mengxinji.github.io/Blog/images/ppo/klconstraint.svg" alt="constraint" style="float:center; padding:16px" /></p>
+
+<h3 id="proximal-policy-optimization">Proximal Policy Optimization</h3>
+
+<p>PPO can be viewed as an approximation of TRPO, but unlike TRPO, which uses a second-order Taylor expansion, PPO uses only a first-order approximation, which makes PPO very effective in RNN networks and in a wide distribution space.</p>
+<p align="center">
+  <img width="450" height="500" src="https://mengxinji.github.io/Blog/images/ppo/ppo.svg" />
+</p>
+
+<p>The first half of Estimate Advantage is obtained through the rollout strategy, and the second half of V is obtained from a value network. (Value network can be trained by the data obtained by rollout, where the mean square error is used).</p>
+
+<p>Here, a &gt; 1, when KL divergence is greater than expected, it will increase the weight of KL divergence in J(PPO) to reduce KL divergence. In this way the control training is maintained within a certain KL divergence change.</p>
+
+<p>When updating Actors, there are actually two ways, one is to update with the KL penalty as we discussed earlier.
+<img src="https://mengxinji.github.io/Blog/images/ppo/KLpenalty.svg" alt="KL" style="float:center; padding:16px" /></p>
+
+<p>There is also a clipped surrogate objective, mentioned from OpenAI’s PPO paper.
+<img src="https://mengxinji.github.io/Blog/images/ppo/Clip.svg" alt="KL" style="float:center; padding:16px" /></p>
+
+<h3 id="example-of-ppo-using-lunarlander-from-openai-gym">Example of PPO Using <a href="https://gym.openai.com/envs/LunarLander-v2/">LunarLander</a> From OpenAI Gym</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="n">nn</span>
+<span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Categorical</span>
+<span class="kn">import</span> <span class="nn">gym</span><span class="p">,</span> <span class="n">os</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span>
+<span class="kn">import</span> <span class="nn">torch.optim</span> <span class="k">as</span> <span class="n">optim</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span> <span class="nn">torch.autograd</span> <span class="kn">import</span> <span class="n">Variable</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">pdb</span>
+
+<span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s">"cuda:0"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s">"cpu"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dim</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">,</span> <span class="n">n_latent_var</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">affine</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">n_latent_var</span><span class="p">)</span>
+        
+        <span class="c1"># actor
+</span>        <span class="bp">self</span><span class="o">.</span><span class="n">action_layer</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">n_latent_var</span><span class="p">),</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">Tanh</span><span class="p">(),</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">n_latent_var</span><span class="p">,</span> <span class="n">n_latent_var</span><span class="p">),</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">Tanh</span><span class="p">(),</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">n_latent_var</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">),</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">Softmax</span><span class="p">(</span><span class="n">dim</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="p">)</span>
+        
+        <span class="c1"># critic
+</span>        <span class="bp">self</span><span class="o">.</span><span class="n">value_layer</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">n_latent_var</span><span class="p">),</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">Tanh</span><span class="p">(),</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">n_latent_var</span><span class="p">,</span> <span class="n">n_latent_var</span><span class="p">),</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">Tanh</span><span class="p">(),</span>
+                <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">n_latent_var</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="p">)</span>
+        
+        <span class="c1"># Memory:
+</span>        <span class="bp">self</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">states</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logprobs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rewards</span> <span class="o">=</span> <span class="p">[]</span>
+        
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">evaluate</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="c1"># if evaluate is True then we also need to pass an action for evaluation
+</span>        <span class="c1"># else we return a new action from distribution
+</span>        <span class="k">if</span> <span class="ow">not</span> <span class="n">evaluate</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">state</span><span class="p">)</span><span class="o">.</span><span class="nb">float</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        
+        <span class="n">state_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_layer</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        
+        <span class="n">action_probs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_layer</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="n">action_distribution</span> <span class="o">=</span> <span class="n">Categorical</span><span class="p">(</span><span class="n">action_probs</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">evaluate</span><span class="p">:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="n">action_distribution</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">logprobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">action_distribution</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">action</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">state_value</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">evaluate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">action_distribution</span><span class="o">.</span><span class="n">entropy</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">evaluate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">action</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">clearMemory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">[:]</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">[:]</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">logprobs</span><span class="p">[:]</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_values</span><span class="p">[:]</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">rewards</span><span class="p">[:]</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">PPO</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dim</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">,</span> <span class="n">n_latent_var</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">betas</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">K_epochs</span><span class="p">,</span> <span class="n">eps_clip</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lr</span> <span class="o">=</span> <span class="n">lr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">betas</span> <span class="o">=</span> <span class="n">betas</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">gamma</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eps_clip</span> <span class="o">=</span> <span class="n">eps_clip</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">K_epochs</span> <span class="o">=</span> <span class="n">K_epochs</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">policy</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">,</span> <span class="n">n_latent_var</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+                                              <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">,</span> <span class="n">betas</span><span class="o">=</span><span class="n">betas</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">policy_old</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">,</span> <span class="n">n_latent_var</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">MseLoss</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>   
+        <span class="c1"># Monte Carlo estimate of state rewards:
+</span>        <span class="n">rewards</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">discounted_reward</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">reward</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">policy_old</span><span class="o">.</span><span class="n">rewards</span><span class="p">):</span>
+            <span class="n">discounted_reward</span> <span class="o">=</span> <span class="n">reward</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="n">discounted_reward</span><span class="p">)</span>
+            <span class="n">rewards</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">discounted_reward</span><span class="p">)</span>
+        
+        <span class="c1"># Normalizing the rewards:
+</span>        <span class="n">rewards</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">rewards</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">rewards</span> <span class="o">=</span> <span class="p">(</span><span class="n">rewards</span> <span class="o">-</span> <span class="n">rewards</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span><span class="n">rewards</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">+</span> <span class="mf">1e-5</span><span class="p">)</span>
+        
+        <span class="c1"># convert list in tensor
+</span>        <span class="n">old_states</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">policy_old</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="n">old_actions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">policy_old</span><span class="o">.</span><span class="n">actions</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="n">old_logprobs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">policy_old</span><span class="o">.</span><span class="n">logprobs</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        
+
+        <span class="c1"># Optimize policy for K epochs:
+</span>        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">K_epochs</span><span class="p">):</span>
+            <span class="c1"># Evaluating old actions and values :
+</span>            <span class="n">dist_entropy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="p">(</span><span class="n">old_states</span><span class="p">,</span> <span class="n">old_actions</span><span class="p">,</span> <span class="n">evaluate</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="c1"># Finding the ratio (pi_theta / pi_theta__old):
+</span>            <span class="n">logprobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="o">.</span><span class="n">logprobs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">ratios</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">logprobs</span> <span class="o">-</span> <span class="n">old_logprobs</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+            
+
+            <span class="c1"># Finding Surrogate Loss:
+</span>            <span class="n">state_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="o">.</span><span class="n">state_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">advantages</span> <span class="o">=</span> <span class="n">rewards</span> <span class="o">-</span> <span class="n">state_values</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+            <span class="n">surr1</span> <span class="o">=</span> <span class="n">ratios</span> <span class="o">*</span> <span class="n">advantages</span>
+            <span class="n">surr2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">ratios</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">eps_clip</span><span class="p">,</span> <span class="mi">1</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">eps_clip</span><span class="p">)</span> <span class="o">*</span> <span class="n">advantages</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="nb">min</span><span class="p">(</span><span class="n">surr1</span><span class="p">,</span> <span class="n">surr2</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">MseLoss</span><span class="p">(</span><span class="n">state_values</span><span class="p">,</span> <span class="n">rewards</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.01</span><span class="o">*</span><span class="n">dist_entropy</span>
+            
+            <span class="c1"># take gradient step
+</span>            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="o">.</span><span class="n">clearMemory</span><span class="p">()</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">policy_old</span><span class="o">.</span><span class="n">clearMemory</span><span class="p">()</span>
+        
+        <span class="c1"># Copy new weights into old policy:
+</span>        <span class="bp">self</span><span class="o">.</span><span class="n">policy_old</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+        
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">############## Hyperparameters ##############
+</span><span class="n">env_name</span> <span class="o">=</span> <span class="s">"LunarLander-v2"</span>
+<span class="c1">#env_name = "CartPole-v1"
+# creating environment
+</span><span class="n">env</span> <span class="o">=</span> <span class="n">gym</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">env_name</span><span class="p">)</span>
+<span class="n">state_dim</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">action_dim</span> <span class="o">=</span> <span class="mi">4</span>
+
+<span class="n">render</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="n">log_interval</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">n_latent_var</span> <span class="o">=</span> <span class="mi">64</span>           <span class="c1"># number of variables in hidden layer
+</span><span class="n">n_update</span> <span class="o">=</span> <span class="mi">2</span>              <span class="c1"># update policy every n episodes
+</span><span class="n">lr</span> <span class="o">=</span> <span class="mf">0.0007</span>
+<span class="n">betas</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.999</span><span class="p">)</span>
+<span class="n">gamma</span> <span class="o">=</span> <span class="mf">0.99</span>                <span class="c1"># discount factor
+</span><span class="n">K_epochs</span> <span class="o">=</span> <span class="mi">5</span>                <span class="c1"># update policy for K epochs
+</span><span class="n">eps_clip</span> <span class="o">=</span> <span class="mf">0.2</span>              <span class="c1"># clip parameter for PPO
+</span><span class="n">random_seed</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="c1">#############################################
+</span>
+<span class="k">if</span> <span class="n">random_seed</span><span class="p">:</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="n">random_seed</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">random_seed</span><span class="p">)</span>
+
+<span class="n">ppo</span> <span class="o">=</span> <span class="n">PPO</span><span class="p">(</span><span class="n">state_dim</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">,</span> <span class="n">n_latent_var</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">betas</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">K_epochs</span><span class="p">,</span> <span class="n">eps_clip</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">lr</span><span class="p">,</span><span class="n">betas</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Plot duration curve: 
+# From http://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
+</span><span class="n">episode_durations</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">def</span> <span class="nf">plot_durations</span><span class="p">():</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">clf</span><span class="p">()</span>
+    <span class="n">durations_t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">episode_durations</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">'Training...'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">'Episode'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">'Duration'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">durations_t</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+    <span class="c1"># Take 100 episode averages and plot them too
+</span>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">durations_t</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">100</span><span class="p">:</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="n">durations_t</span><span class="o">.</span><span class="n">unfold</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">99</span><span class="p">),</span> <span class="n">means</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">means</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.001</span><span class="p">)</span>  <span class="c1"># pause a bit so that plots are updated
+</span></code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">running_reward</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">avg_length</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="n">i_episode</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">11</span><span class="p">):</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span> <span class="c1">#10000
+</span>        <span class="c1"># Running policy_old:
+</span>        <span class="n">action</span> <span class="o">=</span> <span class="n">ppo</span><span class="o">.</span><span class="n">policy_old</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="n">state_n</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+
+        <span class="c1"># Saving state and reward:
+</span>        <span class="n">ppo</span><span class="o">.</span><span class="n">policy_old</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="n">ppo</span><span class="o">.</span><span class="n">policy_old</span><span class="o">.</span><span class="n">rewards</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+        
+        <span class="n">state</span> <span class="o">=</span> <span class="n">state_n</span>
+
+        <span class="n">running_reward</span> <span class="o">+=</span> <span class="n">reward</span>
+        <span class="k">if</span> <span class="n">render</span><span class="p">:</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+            <span class="c1">#print(i_episode, t)
+</span>            <span class="n">episode_durations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">plot_durations</span><span class="p">()</span>
+            <span class="k">break</span>
+    
+    <span class="n">avg_length</span> <span class="o">+=</span> <span class="n">t</span>
+    <span class="c1"># update after n episodes
+</span>    <span class="k">if</span> <span class="n">i_episode</span> <span class="o">%</span> <span class="n">n_update</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+
+        <span class="n">ppo</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+    <span class="c1"># log
+</span>    <span class="k">if</span> <span class="n">running_reward</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">log_interval</span><span class="o">*</span><span class="mi">200</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">"########## Solved! ##########"</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">ppo</span><span class="o">.</span><span class="n">policy</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span> 
+                   <span class="s">'./LunarLander_{}_{}_{}.pth'</span><span class="o">.</span><span class="nb">format</span><span class="p">(</span>
+                    <span class="n">lr</span><span class="p">,</span> <span class="n">betas</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">betas</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">break</span>
+
+    <span class="k">if</span> <span class="n">i_episode</span> <span class="o">%</span> <span class="n">log_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">avg_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">avg_length</span><span class="o">/</span><span class="n">log_interval</span><span class="p">)</span>
+        <span class="n">running_reward</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">running_reward</span><span class="o">/</span><span class="n">log_interval</span><span class="p">))</span>
+
+        <span class="k">print</span><span class="p">(</span><span class="s">'Episode {} </span><span class="se">\t</span><span class="s"> avg length: {} </span><span class="se">\t</span><span class="s"> reward: {}'</span><span class="o">.</span><span class="nb">format</span><span class="p">(</span>
+                <span class="n">i_episode</span><span class="p">,</span> <span class="n">avg_length</span><span class="p">,</span> <span class="n">running_reward</span><span class="p">))</span>
+        <span class="n">running_reward</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">avg_length</span> <span class="o">=</span> <span class="mi">0</span>
+</code></pre></div></div>
+
+<p><img src="https://mengxinji.github.io/Blog/images/ppo/optimize.png" alt="optimizer" style="float:bottom; padding:16px" /></p>
+
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/blogs/2019/04/08/Actor-Critic.html" data-toggle="tooltip" data-placement="top" title="Actor Critic">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        <ul class="list-inline text-center">
+          
+          <li class="list-inline-item">
+            <a href="mailto:mengxin.ji1992@gmail.com">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://twitter.com/Helen_econ">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://www.facebook.com/mumujimx">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-facebook-f fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://www.linkedin.com/in/mengxinji">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://github.com/MengxinJi">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+        </ul>
+        <p class="copyright text-muted">Copyright &copy; Helen Ji 2019</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+  <script src="/blogs/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/blogs/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/blogs/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/blogs/assets/scripts.js"></script>
+
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXXXXXX-X"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-XXXXXXXXX-X');
+</script>
+
+
+
+</body>
+
+</html>

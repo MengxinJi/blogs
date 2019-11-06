@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <title>
+    Notebook: Tabular Q-Learning - Helen&#39;s Blog
+    
+  </title>
+
+  <meta name="description" content="Sarsa Sarsa is an online updating method for Reinforcement learning. Unlike Q learning which is a offline updating method, Sarsa is updating while in the cur...">
+
+  <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="/blogs/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+  <link rel="stylesheet" href="/blogs/assets/vendor/fontawesome-free/css/all.min.css">
+
+  <link rel="stylesheet" href="/blogs/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/blogs/2019/03/09/notebook-sarsa.html">
+  <link rel="alternate" type="application/rss+xml" title="Helen&#39;s Blog" href="/blogs/feed.xml">
+
+</head>
+
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="/blogs/">Helen&#39;s Blog</a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+      Menu
+      <i class="fa fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/about">About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/posts">Posts</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/contact">Contact</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Notebook: Tabular Q-Learning</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Helen Ji</a>
+              on March 09, 2019 &middot; <span class="reading-time" title="Estimated read time">
+  
+   16 mins  read </span>
+
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <h2 id="sarsa">Sarsa</h2>
+<p>Sarsa is an online updating method for Reinforcement learning.
+Unlike Q learning which is a offline updating method, Sarsa is updating while in the current trajectory.</p>
+
+<h4 id="1-some-terminologies">1. Some terminologies</h4>
+<ul>
+  <li>State: s</li>
+  <li>Available actions: a</li>
+  <li>Greedy police: $\epsilon$</li>
+  <li>Learning rate: $\alpha$</li>
+  <li>Discount factor: $\gamma$</li>
+  <li>Maximum episodes</li>
+</ul>
+
+<h4 id="2-sudo-algorithm">2. Sudo Algorithm:</h4>
+<ul>
+  <li>Initialize Q(s,a) arbirarily</li>
+  <li>For each episode, repeat:
+    <ul>
+      <li>Initialize state s</li>
+      <li>Choose action a from state s using policy derived from Q value</li>
+      <li>Repeat (for each step of episode):
+        <ul>
+          <li>Take action a and then observe r, s’(next state)</li>
+          <li>Choose action a’ from state s’ using policy derived from Q value</li>
+          <li>update Q value by $Q(s, a) \leftarrow Q(s, a) + \alpha \cdot (r + \gamma Q(s’,a’) - Q(s,a))$</li>
+          <li>update s by s’, a by a’</li>
+        </ul>
+      </li>
+      <li>stop till s reaches termination</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="define-maza-environment">Define Maza Environment</h3>
+<p>This is the environment part of this example.</p>
+
+<p>Reference: https://morvanzhou.github.io/tutorials/</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">## maze env 
+</span><span class="s">"""
+Reinforcement learning maze example.
+"H":      Holes       [reward = -1].
+"D":      Diamond     [reward = +1].
+"0":      Ground      [reward = 0].
+
++++++++++++++++++
++ 0 + 0 + 0 + 0 +  
++ 0 + H + 0 + 0 +
++ 0 + H + D + 0 +
++ 0 + 0 + 0 + 0 +
++++++++++++++++++
+"""</span>
+
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">Tkinter</span> <span class="k">as</span> <span class="n">tk</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">tkinter</span> <span class="k">as</span> <span class="n">tk</span>
+
+
+<span class="n">UNIT</span> <span class="o">=</span> <span class="mi">40</span>   <span class="c1"># pixels
+</span><span class="n">MAZE_H</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># grid height
+</span><span class="n">MAZE_W</span> <span class="o">=</span> <span class="mi">4</span>  <span class="c1"># grid width
+</span>
+
+<span class="k">class</span> <span class="nc">Maze</span><span class="p">(</span><span class="n">tk</span><span class="o">.</span><span class="n">Tk</span><span class="p">,</span> <span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Maze</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">action_space</span> <span class="o">=</span> <span class="p">[</span><span class="s">'u'</span><span class="p">,</span> <span class="s">'d'</span><span class="p">,</span> <span class="s">'l'</span><span class="p">,</span> <span class="s">'r'</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_actions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">action_space</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">'maze'</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">geometry</span><span class="p">(</span><span class="s">'{0}x{1}'</span><span class="o">.</span><span class="nb">format</span><span class="p">(</span><span class="n">MAZE_H</span> <span class="o">*</span> <span class="n">UNIT</span><span class="p">,</span> <span class="n">MAZE_H</span> <span class="o">*</span> <span class="n">UNIT</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_maze</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_build_maze</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Canvas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bg</span><span class="o">=</span><span class="s">'white'</span><span class="p">,</span>
+                           <span class="n">height</span><span class="o">=</span><span class="n">MAZE_H</span> <span class="o">*</span> <span class="n">UNIT</span><span class="p">,</span>
+                           <span class="n">width</span><span class="o">=</span><span class="n">MAZE_W</span> <span class="o">*</span> <span class="n">UNIT</span><span class="p">)</span>
+
+        <span class="c1"># create grids
+</span>        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">MAZE_W</span> <span class="o">*</span> <span class="n">UNIT</span><span class="p">,</span> <span class="n">UNIT</span><span class="p">):</span>
+            <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">c</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">MAZE_H</span> <span class="o">*</span> <span class="n">UNIT</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">create_line</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">MAZE_H</span> <span class="o">*</span> <span class="n">UNIT</span><span class="p">,</span> <span class="n">UNIT</span><span class="p">):</span>
+            <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">MAZE_W</span> <span class="o">*</span> <span class="n">UNIT</span><span class="p">,</span> <span class="n">r</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">create_line</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">)</span>
+
+        <span class="c1"># create origin
+</span>        <span class="n">origin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">])</span>
+
+        <span class="c1"># hell
+</span>        <span class="n">hell1_center</span> <span class="o">=</span> <span class="n">origin</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">UNIT</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">UNIT</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hell1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">create_rectangle</span><span class="p">(</span>
+            <span class="n">hell1_center</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">15</span><span class="p">,</span> <span class="n">hell1_center</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">15</span><span class="p">,</span>
+            <span class="n">hell1_center</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">15</span><span class="p">,</span> <span class="n">hell1_center</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">15</span><span class="p">,</span>
+            <span class="n">fill</span><span class="o">=</span><span class="s">'black'</span><span class="p">)</span>
+        <span class="c1"># hell
+</span>        <span class="n">hell2_center</span> <span class="o">=</span> <span class="n">origin</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">UNIT</span><span class="p">,</span> <span class="n">UNIT</span> <span class="o">*</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hell2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">create_rectangle</span><span class="p">(</span>
+            <span class="n">hell2_center</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">15</span><span class="p">,</span> <span class="n">hell2_center</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">15</span><span class="p">,</span>
+            <span class="n">hell2_center</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">15</span><span class="p">,</span> <span class="n">hell2_center</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">15</span><span class="p">,</span>
+            <span class="n">fill</span><span class="o">=</span><span class="s">'black'</span><span class="p">)</span>
+
+        <span class="c1"># create oval
+</span>        <span class="n">oval_center</span> <span class="o">=</span> <span class="n">origin</span> <span class="o">+</span> <span class="n">UNIT</span> <span class="o">*</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">oval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">create_oval</span><span class="p">(</span>
+            <span class="n">oval_center</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">15</span><span class="p">,</span> <span class="n">oval_center</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">15</span><span class="p">,</span>
+            <span class="n">oval_center</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">15</span><span class="p">,</span> <span class="n">oval_center</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">15</span><span class="p">,</span>
+            <span class="n">fill</span><span class="o">=</span><span class="s">'yellow'</span><span class="p">)</span>
+
+        <span class="c1"># create red rect
+</span>        <span class="bp">self</span><span class="o">.</span><span class="n">rect</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">create_rectangle</span><span class="p">(</span>
+            <span class="n">origin</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">15</span><span class="p">,</span> <span class="n">origin</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">15</span><span class="p">,</span>
+            <span class="n">origin</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">15</span><span class="p">,</span> <span class="n">origin</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">15</span><span class="p">,</span>
+            <span class="n">fill</span><span class="o">=</span><span class="s">'red'</span><span class="p">)</span>
+
+        <span class="c1"># pack all
+</span>        <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rect</span><span class="p">)</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rect</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">create_rectangle</span><span class="p">(</span>
+            <span class="n">origin</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">15</span><span class="p">,</span> <span class="n">origin</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">15</span><span class="p">,</span>
+            <span class="n">origin</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">15</span><span class="p">,</span> <span class="n">origin</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">15</span><span class="p">,</span>
+            <span class="n">fill</span><span class="o">=</span><span class="s">'red'</span><span class="p">)</span>
+        <span class="c1"># return observation
+</span>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">coords</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rect</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">coords</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rect</span><span class="p">)</span>
+        <span class="n">base_action</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">action</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>   <span class="c1"># up
+</span>            <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">UNIT</span><span class="p">:</span>
+                <span class="n">base_action</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="n">UNIT</span>
+        <span class="k">elif</span> <span class="n">action</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>   <span class="c1"># down
+</span>            <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">MAZE_H</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">UNIT</span><span class="p">:</span>
+                <span class="n">base_action</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">UNIT</span>
+        <span class="k">elif</span> <span class="n">action</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>   <span class="c1"># right
+</span>            <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">MAZE_W</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">UNIT</span><span class="p">:</span>
+                <span class="n">base_action</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">UNIT</span>
+        <span class="k">elif</span> <span class="n">action</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>   <span class="c1"># left
+</span>            <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">UNIT</span><span class="p">:</span>
+                <span class="n">base_action</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-=</span> <span class="n">UNIT</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rect</span><span class="p">,</span> <span class="n">base_action</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">base_action</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># move agent
+</span>
+        <span class="n">s_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">coords</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rect</span><span class="p">)</span>  <span class="c1"># next state
+</span>
+        <span class="c1"># reward function
+</span>        <span class="k">if</span> <span class="n">s_</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">coords</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">oval</span><span class="p">):</span>
+            <span class="n">reward</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">s_</span> <span class="o">=</span> <span class="s">'terminal'</span>
+        <span class="k">elif</span> <span class="n">s_</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">coords</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hell1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">coords</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hell2</span><span class="p">)]:</span>
+            <span class="n">reward</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">s_</span> <span class="o">=</span> <span class="s">'terminal'</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reward</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="k">return</span> <span class="n">s_</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span>
+
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h3 id="define-the-steps">Define the steps</h3>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+
+
+<span class="k">class</span> <span class="nc">RL</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action_space</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">reward_decay</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">e_greedy</span><span class="o">=</span><span class="mf">0.9</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="n">action_space</span>  <span class="c1"># a list
+</span>        <span class="bp">self</span><span class="o">.</span><span class="n">lr</span> <span class="o">=</span> <span class="n">learning_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">reward_decay</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">e_greedy</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">check_state_exist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+            <span class="c1"># append new state to q table
+</span>            <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+                    <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">),</span>
+                    <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">choose_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_state_exist</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
+        <span class="c1"># action selection
+</span>        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span><span class="p">:</span>
+            <span class="c1"># choose best action
+</span>            <span class="n">state_action</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">observation</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="c1"># some actions may have the same value, randomly choose on in these actions
+</span>            <span class="n">action</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">state_action</span><span class="p">[</span><span class="n">state_action</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="nb">max</span><span class="p">(</span><span class="n">state_action</span><span class="p">)]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># choose random action
+</span>            <span class="n">action</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">action</span>
+
+    <span class="k">def</span> <span class="nf">learn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="c1"># on-policy
+</span><span class="k">class</span> <span class="nc">SarsaTable</span><span class="p">(</span><span class="n">RL</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actions</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">reward_decay</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">e_greedy</span><span class="o">=</span><span class="mf">0.9</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SarsaTable</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">actions</span><span class="p">,</span> <span class="n">learning_rate</span><span class="p">,</span> <span class="n">reward_decay</span><span class="p">,</span> <span class="n">e_greedy</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">learn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">s_</span><span class="p">,</span> <span class="n">a_</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_state_exist</span><span class="p">(</span><span class="n">s_</span><span class="p">)</span>
+        <span class="n">q_predict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">a</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">s_</span> <span class="o">!=</span> <span class="s">'terminal'</span><span class="p">:</span>
+            <span class="n">q_target</span> <span class="o">=</span> <span class="n">r</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">s_</span><span class="p">,</span> <span class="n">a_</span><span class="p">]</span>  <span class="c1"># next state is not terminal
+</span>        <span class="k">else</span><span class="p">:</span>
+            <span class="n">q_target</span> <span class="o">=</span> <span class="n">r</span>  <span class="c1"># next state is terminal
+</span>        <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">s</span><span class="p">,</span> <span class="n">a</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_target</span> <span class="o">-</span> <span class="n">q_predict</span><span class="p">)</span>  <span class="c1"># update
+</span></code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">update</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">episode</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">):</span>
+        <span class="c1"># initial observation
+</span>        <span class="n">observation</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="c1"># RL choose action based on observation
+</span>        <span class="n">action</span> <span class="o">=</span> <span class="n">Sarsa</span><span class="o">.</span><span class="n">choose_action</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">observation</span><span class="p">))</span>
+
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="c1"># fresh env
+</span>            <span class="n">env</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+
+            <span class="c1"># RL take action and get next observation and reward
+</span>            <span class="n">observation_</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+
+            <span class="c1"># RL choose action based on next observation
+</span>            <span class="n">action_</span> <span class="o">=</span> <span class="n">Sarsa</span><span class="o">.</span><span class="n">choose_action</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">observation_</span><span class="p">))</span>
+
+            <span class="c1"># RL learn from this transition (s, a, r, s, a) ==&gt; Sarsa
+</span>            <span class="n">Sarsa</span><span class="o">.</span><span class="n">learn</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">observation</span><span class="p">),</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">observation_</span><span class="p">),</span> <span class="n">action_</span><span class="p">)</span>
+
+            <span class="c1"># swap observation and action
+</span>            <span class="n">observation</span> <span class="o">=</span> <span class="n">observation_</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="n">action_</span>
+
+            <span class="c1"># break while loop when end of this episode
+</span>            <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+                <span class="k">break</span>
+        
+        <span class="c1">## check current status of the game
+</span>        <span class="k">if</span> <span class="n">episode</span> <span class="o">%</span> <span class="mi">5</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">Sarsa</span><span class="o">.</span><span class="n">q_table</span><span class="p">)</span> 
+            
+    <span class="c1"># end of game
+</span>    <span class="k">print</span><span class="p">(</span><span class="s">'game over'</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">destroy</span><span class="p">()</span>
+    
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">Maze</span><span class="p">()</span>
+    <span class="n">Sarsa</span> <span class="o">=</span> <span class="n">SarsaTable</span><span class="p">(</span><span class="n">actions</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">n_actions</span><span class="p">)))</span>
+
+    <span class="n">env</span><span class="o">.</span><span class="n">after</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">update</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">mainloop</span><span class="p">()</span>
+</code></pre></div></div>
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/blogs/2019/03/09/notebook-q-learning.html" data-toggle="tooltip" data-placement="top" title="Notebook: Tabular Q-Learning">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+          <a class="btn btn-primary float-right" href="/blogs/2019/03/09/notebook-dqn.html" data-toggle="tooltip" data-placement="top" title="Notebook: DQN">Next<span class="d-none d-md-inline">
+              Post</span> &rarr;</a>
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        <ul class="list-inline text-center">
+          
+          <li class="list-inline-item">
+            <a href="mailto:mengxin.ji1992@gmail.com">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://twitter.com/Helen_econ">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://www.facebook.com/mumujimx">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-facebook-f fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://www.linkedin.com/in/mengxinji">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://github.com/MengxinJi">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+        </ul>
+        <p class="copyright text-muted">Copyright &copy; Helen Ji 2019</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+  <script src="/blogs/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/blogs/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/blogs/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/blogs/assets/scripts.js"></script>
+
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXXXXXX-X"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-XXXXXXXXX-X');
+</script>
+
+
+
+</body>
+
+</html>

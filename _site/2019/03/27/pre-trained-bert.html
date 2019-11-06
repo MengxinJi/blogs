@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <title>
+    Pre-trained BERT - Helen&#39;s Blog
+    
+  </title>
+
+  <meta name="description" content="BERT is short for Bidirectional Encoder Representation from Transformers, which is the Encoder of the two-way Transformer, because the Decoder cannot get the...">
+
+  <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="/blogs/assets/vendor/bootstrap/css/bootstrap.min.css">
+
+  <link rel="stylesheet" href="/blogs/assets/vendor/fontawesome-free/css/all.min.css">
+
+  <link rel="stylesheet" href="/blogs/assets/main.css">
+  <link rel="canonical" href="http://localhost:4000/blogs/2019/03/27/pre-trained-bert.html">
+  <link rel="alternate" type="application/rss+xml" title="Helen&#39;s Blog" href="/blogs/feed.xml">
+
+</head>
+
+
+<body>
+
+  <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="/blogs/">Helen&#39;s Blog</a>
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+      Menu
+      <i class="fa fa-bars"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/about">About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/posts">Posts</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/blogs/contact">Contact</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+  <!-- Page Header -->
+
+  <header class="masthead">
+    
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>Pre-trained BERT</h1>
+            
+            <span class="meta">Posted by
+              <a href="#">Helen Ji</a>
+              on March 27, 2019 &middot; <span class="reading-time" title="Estimated read time">
+  
+   5 mins  read </span>
+
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+
+        <p>BERT is short for Bidirectional Encoder Representation from Transformers, which is the Encoder of the two-way Transformer, because the Decoder cannot get the information to be predicted. The main innovation for the model is in the pre-trained method, which uses Masked Language Model and Next Sentence Prediction to capture the word and sentence level representation respectively.  This allows us to use a pre-trained BERT model by fine-tuning the same on downstream specific tasks such as sentiment classification, intent detection, question answering and more.</p>
+
+<h2 id="pre-trained-task-1-masked-language-model">Pre-trained Task 1: Masked Language Model</h2>
+
+<h2 id="pre-trained-task-2-next-sentence-prediction">Pre-trained Task 2; Next Sentence Prediction</h2>
+
+<h2 id="pre-trained-models">Pre-trained Models</h2>
+
+<p>Google Research recently open-sourced implementation of BERT and also released the following pre-trained models:</p>
+
+<ul>
+  <li>BERT-Base, Uncased: 12-layer, 768-hidden, 12-heads, 110M parameters</li>
+  <li>BERT-Large, Uncased: 24-layer, 1024-hidden, 16-heads, 340M parameters</li>
+  <li>BERT-Base, Cased: 12-layer, 768-hidden, 12-heads , 110M parameters</li>
+  <li>BERT-Large, Cased: 24-layer, 1024-hidden, 16-heads, 340M parameters</li>
+  <li>BERT-Base, Multilingual Cased (New, recommended): 104 languages, 12-layer, 768-hidden, 12-heads, 110M parameters</li>
+  <li>BERT-Base, Chinese: Chinese Simplified and Traditional, 12-layer, 768-hidden, 12-heads, 110M parameters</li>
+</ul>
+
+<p>In the following example, I will use bert-base-uncased pre-trained model.</p>
+
+<h2 id="embedding">Embedding</h2>
+<p>In BERT, the embedding is the summation of three types of embeddings:</p>
+
+<p><img src="https://mengxinji.github.io/Blog/images/bert/embedding.jpg" alt="Embedding" style="float:right; padding:16px" /></p>
+
+<p>where:</p>
+<ul>
+  <li>Token Embeddings is a word vector, with the first word as the CLS flag, which can be used for classification tasks;</li>
+  <li>Segment Embeddings is used to distinguish between two sentences, since pre-training is not just a language modeling but also a classification task with two sentences as input;</li>
+  <li>Position Embedding is different from Transformer in the previous article.</li>
+</ul>
+
+<p>We have to convert the input to the feature that is understood by BERT.</p>
+
+<ul>
+  <li>input_ids: list of numerical ids for the tokenized text</li>
+  <li>input_mask: will be set to 1 for real tokens and 0 for the padding tokens</li>
+  <li>segment_ids: for our case, this will be set to the list of ones</li>
+  <li>label_ids: one-hot encoded labels for the text</li>
+</ul>
+
+<h2 id="tokenization">Tokenization</h2>
+
+<p>BERT-Base, uncased uses a vocabulary of 30,522 words. The processes of tokenization involves splitting the input text into list of tokens that are available in the vocabulary. In order to deal with the words not available in the vocabulary, BERT uses a technique called BPE based WordPiece tokenization.</p>
+
+<h2 id="model-architecture">Model Architecture</h2>
+
+<p>Here I use pre-trained BERT for binary sentiment analysis on Stanford Sentiment Treebank.</p>
+
+<ul>
+  <li>BertEmbeddings: Input embedding layer</li>
+  <li>BertEncoder: The 12 BERT attention layers</li>
+  <li>Classifier: Our multi-label classifier with out_features=2, each corresponding to our 2 labels</li>
+</ul>
+
+<div class="language-css highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">-</span> <span class="nt">BertModel</span>
+    <span class="nt">-</span> <span class="nt">embeddings</span><span class="o">:</span> <span class="nt">BertEmbeddings</span>
+      	<span class="nt">-</span> <span class="nt">word_embeddings</span><span class="o">:</span> <span class="nt">Embedding</span><span class="o">(</span><span class="nt">28996</span><span class="o">,</span> <span class="nt">768</span><span class="o">)</span>
+      	<span class="nt">-</span> <span class="nt">position_embeddings</span><span class="o">:</span> <span class="nt">Embedding</span><span class="o">(</span><span class="nt">512</span><span class="o">,</span> <span class="nt">768</span><span class="o">)</span>
+      	<span class="nt">-</span> <span class="nt">token_type_embeddings</span><span class="o">:</span> <span class="nt">Embedding</span><span class="o">(</span><span class="nt">2</span><span class="o">,</span> <span class="nt">768</span><span class="o">)</span>
+      	<span class="nt">-</span> <span class="nt">LayerNorm</span><span class="o">:</span> <span class="nt">FusedLayerNorm</span><span class="o">(</span><span class="nt">torch</span><span class="nc">.Size</span><span class="o">([</span><span class="nt">768</span><span class="o">])</span>
+	<span class="nt">-</span> <span class="nt">dropout</span><span class="o">:</span> <span class="nt">Dropout</span> <span class="o">=</span> <span class="nt">0</span><span class="nc">.1</span>
+    <span class="nt">-</span> <span class="nt">encoder</span><span class="o">:</span> <span class="nt">BertEncoder</span>
+      	<span class="nt">-</span> <span class="nt">BertLayer</span>
+          	<span class="nt">-</span> <span class="nt">attention</span><span class="o">:</span> <span class="nt">BertAttention</span>
+            		<span class="nt">-</span> <span class="nt">self</span><span class="o">:</span> <span class="nt">BertSelfAttention</span>
+              		<span class="nt">-</span> <span class="nt">query</span><span class="o">:</span> <span class="nt">Linear</span><span class="o">(</span><span class="nt">in_features</span><span class="o">=</span><span class="nt">768</span><span class="o">,</span> <span class="nt">out_features</span><span class="o">=</span><span class="nt">768</span><span class="o">,</span> <span class="nt">bias</span><span class="o">=</span><span class="nt">True</span><span class="o">)</span>
+              		<span class="nt">-</span> <span class="nt">key</span><span class="o">:</span> <span class="nt">Linear</span><span class="o">(</span><span class="nt">in_features</span><span class="o">=</span><span class="nt">768</span><span class="o">,</span> <span class="nt">out_features</span><span class="o">=</span><span class="nt">768</span><span class="o">,</span> <span class="nt">bias</span><span class="o">=</span><span class="nt">True</span><span class="o">)</span>
+               		<span class="nt">-</span> <span class="nt">value</span><span class="o">:</span> <span class="nt">Linear</span><span class="o">(</span><span class="nt">in_features</span><span class="o">=</span><span class="nt">768</span><span class="o">,</span> <span class="nt">out_features</span><span class="o">=</span><span class="nt">768</span><span class="o">,</span> <span class="nt">bias</span><span class="o">=</span><span class="nt">True</span><span class="o">)</span>
+              		<span class="nt">-</span> <span class="nt">dropout</span><span class="o">:</span> <span class="nt">Dropout</span> <span class="o">=</span> <span class="nt">0</span><span class="nc">.1</span>
+            	<span class="nt">-</span> <span class="nt">output</span><span class="o">:</span> <span class="nt">BertSelfOutput</span><span class="o">(</span>
+              		<span class="nt">-</span> <span class="nt">dense</span><span class="o">:</span> <span class="nt">Linear</span><span class="o">(</span><span class="nt">in_features</span><span class="o">=</span><span class="nt">768</span><span class="o">,</span> <span class="nt">out_features</span><span class="o">=</span><span class="nt">768</span><span class="o">,</span> <span class="nt">bias</span><span class="o">=</span><span class="nt">True</span><span class="o">)</span>
+              		<span class="nt">-</span> <span class="nt">LayerNorm</span><span class="o">:</span> <span class="nt">FusedLayerNorm</span><span class="o">(</span><span class="nt">torch</span><span class="nc">.Size</span><span class="o">([</span><span class="nt">768</span><span class="o">]),</span> 
+              		<span class="nt">-</span> <span class="nt">dropout</span><span class="o">:</span> <span class="nt">Dropout</span> <span class="o">=</span><span class="nt">0</span><span class="nc">.1</span>
+
+          	<span class="nt">-</span> <span class="nt">intermediate</span><span class="o">:</span> <span class="nt">BertIntermediate</span><span class="o">(</span>
+            		<span class="nt">-</span> <span class="nt">dense</span><span class="o">):</span> <span class="nt">Linear</span><span class="o">(</span><span class="nt">in_features</span><span class="o">=</span><span class="nt">768</span><span class="o">,</span> <span class="nt">out_features</span><span class="o">=</span><span class="nt">3072</span><span class="o">,</span> <span class="nt">bias</span><span class="o">=</span><span class="nt">True</span><span class="o">)</span>
+          
+          	<span class="nt">-</span> <span class="nt">output</span><span class="o">:</span> <span class="nt">BertOutput</span>
+            		<span class="nt">-</span> <span class="nt">dense</span><span class="o">:</span> <span class="nt">Linear</span><span class="o">(</span><span class="nt">in_features</span><span class="o">=</span><span class="nt">3072</span><span class="o">,</span> <span class="nt">out_features</span><span class="o">=</span><span class="nt">768</span><span class="o">,</span> <span class="nt">bias</span><span class="o">=</span><span class="nt">True</span><span class="o">)</span>
+            		<span class="nt">-</span> <span class="nt">LayerNorm</span><span class="o">:</span> <span class="nt">FusedLayerNorm</span><span class="o">(</span><span class="nt">torch</span><span class="nc">.Size</span><span class="o">([</span><span class="nt">768</span><span class="o">])</span>
+            		<span class="nt">-</span> <span class="nt">dropout</span><span class="o">:</span> <span class="nt">Dropout</span> <span class="o">=</span><span class="nt">0</span><span class="nc">.1</span>
+ 	<span class="nt">-</span> <span class="nt">pooler</span><span class="o">:</span> <span class="nt">BertPooler</span>
+      		<span class="nt">-</span> <span class="nt">dense</span><span class="o">:</span> <span class="nt">Linear</span><span class="o">(</span><span class="nt">in_features</span><span class="o">=</span><span class="nt">768</span><span class="o">,</span> <span class="nt">out_features</span><span class="o">=</span><span class="nt">768</span><span class="o">,</span> <span class="nt">bias</span><span class="o">=</span><span class="nt">True</span><span class="o">)</span>
+      		<span class="nt">-</span> <span class="nt">activation</span><span class="o">:</span> <span class="nt">Tanh</span><span class="o">()</span>
+	<span class="nt">-</span> <span class="nt">dropout</span><span class="o">:</span> <span class="nt">Dropout</span> <span class="o">=</span><span class="nt">0</span><span class="nc">.1</span>
+ 	<span class="nt">-</span> <span class="nt">classifier</span><span class="o">:</span> <span class="nt">Linear</span><span class="o">(</span><span class="nt">in_features</span><span class="o">=</span><span class="nt">768</span><span class="o">,</span> <span class="nt">out_features</span> <span class="o">=</span> <span class="nt">2</span><span class="o">,</span> <span class="nt">bias</span><span class="o">=</span><span class="nt">True</span><span class="o">)</span>
+</code></pre></div></div>
+
+
+
+        <hr>
+
+        <div class="clearfix">
+
+          
+          <a class="btn btn-primary float-left" href="/blogs/2019/03/21/transformer.html" data-toggle="tooltip" data-placement="top" title="Transformer">&larr; Previous<span class="d-none d-md-inline">
+              Post</span></a>
+          
+          
+          <a class="btn btn-primary float-right" href="/blogs/2019/04/01/Policy-Optimization.html" data-toggle="tooltip" data-placement="top" title="Policy Optimization">Next<span class="d-none d-md-inline">
+              Post</span> &rarr;</a>
+          
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+
+<hr>
+
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        <ul class="list-inline text-center">
+          
+          <li class="list-inline-item">
+            <a href="mailto:mengxin.ji1992@gmail.com">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="far fa-envelope fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://twitter.com/Helen_econ">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://www.facebook.com/mumujimx">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-facebook-f fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://www.linkedin.com/in/mengxinji">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+          
+          <li class="list-inline-item">
+            <a href="https://github.com/MengxinJi">
+              <span class="fa-stack fa-lg">
+                <i class="fas fa-circle fa-stack-2x"></i>
+                <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+              </span>
+            </a>
+          </li>
+          
+        </ul>
+        <p class="copyright text-muted">Copyright &copy; Helen Ji 2019</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+  <script src="/blogs/assets/vendor/jquery/jquery.min.js"></script>
+<script src="/blogs/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/blogs/assets/vendor/startbootstrap-clean-blog/js/clean-blog.min.js"></script>
+
+<script src="/blogs/assets/scripts.js"></script>
+
+
+
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXXXXXX-X"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-XXXXXXXXX-X');
+</script>
+
+
+
+</body>
+
+</html>
