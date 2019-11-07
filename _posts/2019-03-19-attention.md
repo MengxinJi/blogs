@@ -3,7 +3,7 @@ layout: post
 title: "Attention"
 description: ""
 date: 2019-03-19
-tags: [OpenAI, NLP, Algorithm]
+tags: OpenAI, NLP, Algorithm
 comments: true
 ---
 Attention is a mechanism for improving the effects of the RNN (LSTM or GRU) based Encoder + Decoder model, commonly referred to as the Attention Mechanism. Attention Mechanism is very popular at present, widely used in many fields such as machine translation, speech recognition, image caption, etc. It is so popular because Attention gives the model the ability to distinguish between regions, for example, in machine translation, speech recognition applications, each word in a sentence is given different weights, making the learning of the neural network model more flexible, and Attention itself can be used as an alignment relationship to interpret translation between input/output sentences. Hence, attention in deep learning can be viewed as a vector of importance weights: we estimate or classify using the attention vector how strongly it is correlated with other elements and take the sum of their values weighted by the attention vector as the approximation of the target.

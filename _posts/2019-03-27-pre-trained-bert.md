@@ -3,7 +3,7 @@ layout: post
 title: "Pre-trained BERT"
 description: ""
 date: 2019-03-27
-tags: [OpenAI, NLP]
+tags: OpenAI, NLP
 comments: true
 ---
 

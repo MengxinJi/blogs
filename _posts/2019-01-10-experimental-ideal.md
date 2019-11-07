@@ -3,7 +3,7 @@ layout: post
 title: "Experimental Ideal"
 description: ""
 date: 2019-01-10
-tags: [Most Harmless Econometrics, Economics]
+tags: Most Harmless Econometrics, Economics
 comments: true
 ---
 There are four questions that we need to consider before we start a research agenda.

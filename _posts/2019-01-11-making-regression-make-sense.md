@@ -3,7 +3,7 @@ layout: post
 title: "Making Regression Make Sense"
 description: ""
 date: 2019-01-11
-tags: [Most Harmless Econometrics, Economics]
+tags: Most Harmless Econometrics, Economics
 comments: true
 ---
 In most cases, regression is used with observational data. Without the benefit of random assignment, regression estimates may or may not have a causal interpretation. 
@@ -13,7 +13,9 @@ In most cases, regression is used with observational data. Without the benefit o
 
 Before discussing about random experiment regression, we first review the following properties about general regression:
 
-(i) the intimate connection between the population regression function and the conditional expectation function;(ii) how and why regression coefficients change as covariates are added or removed from the model;(iii) the close link between regression and other "control strategies" such as matching;
+(i) the intimate connection between the population regression function and the conditional expectation function;
+(ii) how and why regression coefficients change as covariates are added or removed from the model;
+(iii) the close link between regression and other "control strategies" such as matching;
 (iv) the sampling distribution of regression estimates.
 
 The question of whether the earnings - schooling relationship is causal is of enormous importance. Even without resolving the difficult question of causality, however, it is clear that education predicts earnings in a narrow statistical sense. This predictive power is compellingly summarized by the conditional expectation function (CEF).

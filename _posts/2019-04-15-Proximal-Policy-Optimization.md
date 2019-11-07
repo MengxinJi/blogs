@@ -3,7 +3,7 @@ layout: post
 title: "Proximal Policy Optimization"
 description: ""
 date: 2019-04-15
-tags: [OpenAI, Reinforcement Learning, Policy Optimization, Notebook]
+tags: OpenAI, Reinforcement Learning, Policy Optimization, Notebook
 comments: true
 ---
 

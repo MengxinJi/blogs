@@ -3,7 +3,7 @@ layout: post
 title: "Policy Optimization"
 description: ""
 date: 2019-04-01
-tags: [OpenAI, Reinforcement Learning, Model-Free RL, Policy Optimization, Notebook]
+tags: OpenAI, Reinforcement Learning, Model-Free RL, Policy Optimization, Notebook
 comments: true
 ---
 

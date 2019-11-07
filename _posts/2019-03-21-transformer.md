@@ -3,7 +3,7 @@ layout: post
 title: "Transformer"
 subtitle: ""
 date: 2019-03-21
-tags: [OpenAI, NLP]
+tags: OpenAI, NLP
 comments: true
 background: '/img/transformer/transformerdetails.png'
 ---

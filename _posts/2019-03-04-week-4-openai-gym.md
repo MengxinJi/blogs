@@ -3,7 +3,7 @@ layout: post
 title: "Week 4: OpenAI gym"
 description: ""
 date: 2019-03-03
-tags: [Reinforcement Learning, OpenAI, gym, Weekly Post]
+tags: Reinforcement Learning, OpenAI, gym, Weekly Post
 comments: true
 ---
 ## Setup AWS with PyTorch/Tensorflow, Jupyter, and OpenAI gym

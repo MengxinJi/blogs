@@ -3,7 +3,7 @@ layout: post
 title: "Notebook: DQN"
 description: ""
 date: 2019-03-09
-tags: [Reinforcement Learning, Algorithm, OpenAI, Notebook]
+tags: Reinforcement Learning, Algorithm, OpenAI, Notebook
 comments: true
 ---
 
